@@ -4,3 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+cidr.workspace = true
+tokio.workspace = true
+futures.workspace = true
+itertools.workspace = true
