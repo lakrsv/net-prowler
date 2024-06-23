@@ -11,5 +11,5 @@ ScanResult { ip: V4(127.0.0.1/32), port: 22, open: true }
 ScanResult { ip: V4(127.0.0.1/32), port: 445, open: true }
 ScanResult { ip: V4(127.0.0.1/32), port: 8080, open: true }
 ScanResult { ip: V4(127.0.0.1/32), port: 23413, open: true }
-Finished scanning 127.0.0.1 with port range 0:65535. Elapsed time: 10.26s
+Finished scanning 127.0.0.1 with port range 0:65535. Elapsed time: 1.63s
 ```
