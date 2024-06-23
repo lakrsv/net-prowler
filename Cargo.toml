@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+  "net_prowler_scanner",
+  "net_prowler_cli"
+  ]
