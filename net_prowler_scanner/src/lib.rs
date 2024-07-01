@@ -1,7 +1,7 @@
 use cidr::{Inet, IpCidr, IpInet, Ipv4Inet};
 use etherparse::err::ipv4;
 use etherparse::{
-    PacketBuilder, SlicedPacket, TcpHeader, TcpHeaderSlice, TcpOptionElement, TcpOptions, TcpSlice,
+    ip_number, Ipv4Header, PacketBuilder, SlicedPacket, TcpHeader, TcpHeaderSlice, TcpOptionElement, TcpOptions, TcpSlice
 };
 use futures::StreamExt;
 use itertools::iproduct;
@@ -24,6 +24,7 @@ impl ScanResult {
     }
 }
 
+// complete handshake example in c++ https://github.com/MaxXor/raw-sockets-example/blob/master/rawsockets.c
 pub async fn tcp_scan_cidr(
     cidr: IpCidr,
     from_port: u16,
@@ -31,25 +32,26 @@ pub async fn tcp_scan_cidr(
     timeout: Duration,
     batch_size: u16,
 ) {
-    let socket = Socket::new_raw(Domain::IPV4, Type::RAW, None).expect("Failed opening socket");
+    let socket = Socket::new_raw(Domain::IPV4, Type::RAW, None)
+    .expect("Failed opening socket");
     socket
         .set_only_v6(false)
-        .expect("Failed setting socket to allow IPV4");
+        .expect("Failed setting socket to allow TCP");
 
-    socket
-        .set_nonblocking(true)
-        .expect("Failed setting socket to non-blocking mode");
+    // socket
+    //     .set_nonblocking(true)
+    //     .expect("Failed setting socket to non-blocking mode");
 
     // socket
     //     .set_header_included(true)
     //     .expect("Failed setting socket to header included");
-    socket
-        .set_header_included(true)
-        .expect("Failed setting socket to header included");
+    // socket
+    //     .set_header_included(true)
+    //     .expect("Failed setting socket to header included");
 
-    // let address: SocketAddr = "0.0.0.0:52114".parse().unwrap();
-    // socket.bind(&address.into()).unwrap();
-    // socket.listen(128).unwrap();
+    //let address: SocketAddr = "0.0.0.0:52114".parse().unwrap();
+    //socket.bind(&address.into()).unwrap();
+    //socket.listen(128).unwrap();
     //dbg!(socket.local_addr().unwrap().as_socket_ipv4().unwrap().ip());
 
     let mut futures = futures::stream::iter(iproduct!(cidr.iter(), from_port..to_port + 1))
@@ -72,10 +74,15 @@ pub async fn tcp_scan(socket: &Socket, ip: IpInet, port: u16, timeout: Duration)
     let syn = create_tcp_syn(ipv4, port);
     let addr = SocketAddr::new(ip.address(), port);
 
+    dbg!(SlicedPacket::from_ethernet(syn.as_slice()).unwrap());
+
+    socket
+    .send_to(syn.as_slice(), &SockAddr::from(addr))
+    .expect("Failed sending data");
+
     // socket
     //     .send_to(syn.as_slice(), &SockAddr::from(addr))
     //     .expect("Failed sending data");
-    socket.send(syn.as_slice()).expect("Failed sending data");
 
     loop {
         //let mut recv_buf: [MaybeUninit<u8>; 4096] = unsafe { MaybeUninit::uninit().assume_init() };
@@ -155,21 +162,36 @@ pub async fn tcp_scan(socket: &Socket, ip: IpInet, port: u16, timeout: Duration)
 
 // loook at https://github.com/JuxhinDB/synner/blob/master/src/tcp.rs
 pub fn create_tcp_syn(destination: Ipv4Inet, port: u16) -> Vec<u8> {
-    let builder = PacketBuilder::ethernet2(
+
+    let builder = PacketBuilder
+    ::ethernet2(
         [0x7c, 0xc2, 0xc6, 0x33, 0x45, 0xa7],
-        [0xff, 0xff, 0xff, 0xff, 0xff, 0xff],
-    )
-    .ipv4(
-        [192, 168, 1, 125],
-        //[91, 196, 222, 30],
-        //[91,196,222,28],
-        //[0; 4],
-        //[0,0,0,0],
-        destination.address().octets(),
-        255,
-    )
-    .tcp(52114, port, 0, 64240)
-    .syn();
+    [0xc4, 0xe5, 0x32, 0x29, 0xff, 0x44])
+    .ipv4([10, 5, 0, 2], destination.address().octets(), 20)
+    // ::ip(etherparse::IpHeaders::Ipv4(Ipv4Header::new(
+    //     0, 
+    //     255, 
+    //     ip_number::TCP, 
+    //     [192, 168, 1, 125], 
+    //     destination.address().octets()).unwrap(), Default::default()))
+        .tcp(52114, port, 123532, 64240)
+        .syn();
+
+    // let builder = PacketBuilder::ethernet2(
+    //     [0x7c, 0xc2, 0xc6, 0x33, 0x45, 0xa7],
+    //     [0xff, 0xff, 0xff, 0xff, 0xff, 0xff],
+    // )
+    // .ipv4(
+    //     [192, 168, 1, 125],
+    //     //[91, 196, 222, 30],
+    //     //[91,196,222,28],
+    //     //[0; 4],
+    //     //[0,0,0,0],
+    //     destination.address().octets(),
+    //     255,
+    // )
+    // .tcp(52114, port, 0, 64240)
+    // .syn();
     let payload = Vec::<u8>::with_capacity(0);
     //let payload = [1, 2, 3, 4, 5, 6, 7, 8];
     let mut result = Vec::<u8>::with_capacity(builder.size(payload.len()));
