@@ -32,19 +32,19 @@ pub async fn tcp_scan_cidr(
     timeout: Duration,
     batch_size: u16,
 ) {
-    let socket = Socket::new_raw(Domain::IPV4, Type::RAW, None)
+    let socket = Socket::new_raw(Domain::IPV4, Type::RAW, Some(Protocol::TCP))
     .expect("Failed opening socket");
-    socket
-        .set_only_v6(false)
-        .expect("Failed setting socket to allow TCP");
+    // socket
+    //     .set_only_v6(false)
+    //     .expect("Failed setting socket to allow TCP");
 
     // socket
     //     .set_nonblocking(true)
     //     .expect("Failed setting socket to non-blocking mode");
 
-    // socket
-    //     .set_header_included(true)
-    //     .expect("Failed setting socket to header included");
+    socket
+        .set_header_included(true)
+        .expect("Failed setting socket to header included");
     // socket
     //     .set_header_included(true)
     //     .expect("Failed setting socket to header included");
@@ -74,7 +74,7 @@ pub async fn tcp_scan(socket: &Socket, ip: IpInet, port: u16, timeout: Duration)
     let syn = create_tcp_syn(ipv4, port);
     let addr = SocketAddr::new(ip.address(), port);
 
-    dbg!(SlicedPacket::from_ethernet(syn.as_slice()).unwrap());
+    //dbg!(SlicedPacket::from_ethernet(syn.as_slice()).unwrap());
 
     socket
     .send_to(syn.as_slice(), &SockAddr::from(addr))
@@ -92,8 +92,6 @@ pub async fn tcp_scan(socket: &Socket, ip: IpInet, port: u16, timeout: Duration)
 
         let res = match socket.recv_from(buffer) {
             Ok(response) => {
-                dbg!(response.1.as_socket_ipv4().unwrap().ip());
-
                 let buffer =
                     unsafe { *(buffer as *mut [MaybeUninit<u8>; 4096] as *mut [u8; 4096]) };
                 let frame = buffer[..response.0].to_vec();
@@ -102,7 +100,7 @@ pub async fn tcp_scan(socket: &Socket, ip: IpInet, port: u16, timeout: Duration)
                 //     //dbg!(unsafe{recv_buf[b].assume_init()});
                 //     frame[b] = unsafe {recv_buf[b].assume_init()}
                 // }
-                match SlicedPacket::from_ethernet(frame.as_slice()) {
+                match SlicedPacket::from_ip(frame.as_slice()) {
                     Err(value) => {
                         println!("Err {:?}", value);
                         return ScanResult::new(ip, port, false);
@@ -164,16 +162,16 @@ pub async fn tcp_scan(socket: &Socket, ip: IpInet, port: u16, timeout: Duration)
 pub fn create_tcp_syn(destination: Ipv4Inet, port: u16) -> Vec<u8> {
 
     let builder = PacketBuilder
-    ::ethernet2(
-        [0x7c, 0xc2, 0xc6, 0x33, 0x45, 0xa7],
-    [0xc4, 0xe5, 0x32, 0x29, 0xff, 0x44])
-    .ipv4([10, 5, 0, 2], destination.address().octets(), 20)
-    // ::ip(etherparse::IpHeaders::Ipv4(Ipv4Header::new(
-    //     0, 
-    //     255, 
-    //     ip_number::TCP, 
-    //     [192, 168, 1, 125], 
-    //     destination.address().octets()).unwrap(), Default::default()))
+    // ::ethernet2(
+    //     [0x7c, 0xc2, 0xc6, 0x33, 0x45, 0xa7],
+    // [0xc4, 0xe5, 0x32, 0x29, 0xff, 0x44])
+    // .ipv4([10, 5, 0, 2], destination.address().octets(), 20)
+    ::ip(etherparse::IpHeaders::Ipv4(Ipv4Header::new(
+        0, 
+        255, 
+        ip_number::TCP, 
+        [172, 19, 161, 44], 
+        destination.address().octets()).unwrap(), Default::default()))
         .tcp(52114, port, 123532, 64240)
         .syn();
 
