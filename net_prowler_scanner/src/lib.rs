@@ -1,20 +1,16 @@
 use cidr::{Inet, IpCidr, IpInet, Ipv4Inet};
-use etherparse::err::{ip, ipv4};
 use etherparse::{
-    ip_number, Ipv4Header, PacketBuilder, SlicedPacket, TcpHeader, TcpHeaderSlice,
-    TcpOptionElement, TcpOptions, TcpSlice,
+    ip_number, Ipv4Header, PacketBuilder, SlicedPacket, TcpHeaderSlice,
 };
 use futures::channel::mpsc::{self, Receiver, Sender};
-use futures::executor::ThreadPool;
-use futures::{SinkExt, StreamExt, TryFutureExt, TryStreamExt};
+use futures::{StreamExt};
 use itertools::iproduct;
 use socket2::{Domain, Protocol, SockAddr, Socket, Type};
 use std::mem::MaybeUninit;
-use std::net::{SocketAddr, TcpListener};
+use std::net::{SocketAddr};
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
-use tokio::task::JoinError;
 
 #[derive(Debug)]
 pub struct StartScanResult {
@@ -69,7 +65,7 @@ pub async fn tcp_scan_cidr(
     let shared_socket: Arc<Socket> = Arc::new(socket);
 
     let listen_socket = shared_socket.clone();
-    let (mut tx, mut rx): (Sender<ScanResult>, Receiver<ScanResult>) = mpsc::channel(65535);
+    let (mut tx, rx): (Sender<ScanResult>, Receiver<ScanResult>) = mpsc::channel(65535);
     tokio::task::spawn(async move {
         loop {
             let mut buffer: [u8; 4096] = [0; 4096];
