@@ -58,7 +58,7 @@ pub async fn tcp_scan_cidr(
         .set_header_included(true)
         .expect("Failed setting socket to header included");
 
-    if to_port >= 65535 {
+    if to_port == 65535 {
         to_port = 65534;
     }
 
@@ -124,7 +124,7 @@ pub async fn tcp_scan_cidr(
             )
         })
         .buffer_unordered(batch_size as usize);
-    while let Some(_) = tasks.next().await {}
+    while (tasks.next().await).is_some() {}
 
     rx
 }
