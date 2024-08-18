@@ -2,9 +2,9 @@ use std::time::Duration;
 
 use cidr::{IpCidr, IpInet};
 use clap::Parser;
-use futures_util::StreamExt;
 use net_prowler_scanner::tcp_scan_cidr;
 use std::time::Instant;
+use futures_util::StreamExt;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -43,9 +43,10 @@ async fn main() {
 
     while let Some(result) = rx.next().await {
         if result.open {
-            println!("Got open port {:?}:{:?}", result.ip, result.port);
+        println!("Got open port {:?}:{:?}", result.ip, result.port);
         }
     }
+
 
     let elapsed = now.elapsed();
     println!(

@@ -12,24 +12,6 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-#[derive(Debug)]
-pub struct StartScanResult {
-    ip: IpInet,
-    port: u16,
-    // TODO: Don't use port as seq number
-    sequence_number: u32,
-}
-
-impl StartScanResult {
-    pub fn new(ip: IpInet, port: u16, sequence_number: u32) -> Self {
-        Self {
-            ip,
-            port,
-            sequence_number,
-        }
-    }
-}
-
 pub struct ScanResult {
     pub ip: IpInet,
     pub port: u16,
@@ -57,6 +39,10 @@ pub async fn tcp_scan_cidr(
     socket
         .set_header_included(true)
         .expect("Failed setting socket to header included");
+
+    socket
+        .set_nonblocking(true)
+        .expect("Failed setting socket to non-blocking mode");
 
     if to_port == 65535 {
         to_port = 65534;
