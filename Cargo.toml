@@ -7,7 +7,8 @@ members = [
 [workspace.dependencies]
 cidr = "0.2.2"
 tokio = { version = "1.38.0", features = ["full"] }
-futures = "0.3.30"
+futures = { version = "0.3.30", features = ["executor", "thread-pool"] }
+futures-util = { version = "0.3.30"}
 itertools = "0.13.0"
 socket2 = "0.5.7"
 etherparse = "0.15"

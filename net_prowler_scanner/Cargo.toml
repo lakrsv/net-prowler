@@ -10,3 +10,4 @@ futures.workspace = true
 itertools.workspace = true
 socket2.workspace = true
 etherparse.workspace = true
+rand.workspace = true

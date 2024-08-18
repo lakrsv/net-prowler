@@ -8,3 +8,4 @@ clap = { version = "4.5.7", features = ["derive"] }
 cidr.workspace = true
 net_prowler_scanner = { path = "../net_prowler_scanner" }
 tokio.workspace = true
+futures-util.workspace = true
